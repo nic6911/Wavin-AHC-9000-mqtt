@@ -30,8 +30,8 @@ String mqttClientWithMac;
 // When mode is set to MQTT_VALUE_MODE_STANDBY, the following temperature will be used
 const float STANDBY_TEMPERATURE_DEG = 5.0;
 
-const uint8_t TX_ENABLE_PIN = 5;
-const bool SWAP_SERIAL_PINS = true;
+const uint8_t TX_ENABLE_PIN = 2;
+const bool SWAP_SERIAL_PINS = false;
 const uint16_t RECIEVE_TIMEOUT_MS = 1000;
 WavinController wavinController(TX_ENABLE_PIN, SWAP_SERIAL_PINS, RECIEVE_TIMEOUT_MS);
 
