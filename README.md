@@ -32,18 +32,19 @@ Time: 2minuts - 4 minuts and then again at 9:30 minutes to 10:15 minutes.
 https://www.youtube.com/watch?v=1uxRvbbd0fc
 
 In your configuration.yaml you have to add:
+```
 mqtt:
   broker: IP address of the MQTT server (so you HA ip)
   username: user name selected previously
   password: password selected previously
   discovery: true
   discovery_prefix: homeassistant  
-
+```
 If you do not want automatic discovery of the zones of Wavin then read further down in the readme to see how.
 
 The settings you just added in the MQTT setup is needed in the configuration of the Wavin ESP-01 software.
 Go to the PrivateConfig.h and edit the settings:
-
+```
 WIFI_SSID = "Enter wireless SSID here";         // wifi ssid (name of your WiFi network)
 WIFI_PASS = "Enter wireless password here";     // wifi password
 
@@ -51,7 +52,7 @@ MQTT_SERVER = "Enter mqtt server address here"; // mqtt server address without p
 MQTT_USER   = "Enter mqtt username here";       // mqtt user. Use "" for no username (just created in the previous video tutorial)
 MQTT_PASS   = "Enter mqtt password here";       // mqtt password. Use "" for no password (just created in the previous video tutorial)
 MQTT_PORT   = 1883;                             // mqtt port
-
+```
 Now, you can hit program down in the left'ish corner of the visual code studio window (tooltips come when you hover the mouse over the small icons).
 When programmed insert the module into the board like shown in the picture and connect it to you AHC9000 using a regular ethernet cable.
 IMPORTANT: To ensure a stable running of the switch mode supply, insert the ESP-01 prior to powering the board with the RJ45. A load on the switch mode on board is good for its stability.
