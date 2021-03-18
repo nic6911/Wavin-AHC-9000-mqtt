@@ -8,8 +8,8 @@ The following schematic shows how to connect an Esp8266 to the AHC-9000:
 
 
 My board design is made to fit with an ESP-01 board as seen here:
-![Schematic](/electronics/Bottom.png)
-![Schematic](/electronics/Top.png)
+![Bottom](/electronics/Bottom.png)
+![Top](/electronics/Top.png)
 
 For this setup to work you need:
 My ESP-01 Modus Interface board or similar
