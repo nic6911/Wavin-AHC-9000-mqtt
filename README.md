@@ -6,16 +6,56 @@ The AHC-9000 uses modbus to communicate over a half duplex RS422 connection. It 
 The following schematic shows how to connect an Esp8266 to the AHC-9000:
 ![Schematic](/electronics/schematic.png)
 
+
+My board design is made to fit with an ESP-01 board as seen here:
+![Schematic](/electronics/Bottom.png)
+![Schematic](/electronics/Top.png)
+
+For this setup to work you need:
+My ESP-01 Modus Interface board or similar
+An ESP-01
+A programmer for the ESP-01
+
+I use the widely available FTDI interface suited for the ESP-01 which requires a minor modification to enable programming mode. To enable programming of the board you need to short two pins for going into programming mode. I solved this with a pin-row and a jumper for selecting programming or not.
+Look in the electronics folder for pictures of the programmer and the modification.
+
 ## Software
 
-### Configuration
-src/PrivateConfig.h contains 5 constants, that should be changed to fit your own setup.
+### My addition to the description:
 
-`WIFI_SSID`, `WIFI_PASS`, `MQTT_SERVER`, `MQTT_USER`, and `MQTT_PASS`.
+You have to install visual code studio (free) and the platformio extension https://platformio.org/ (google it if you have challenges).
+You then have to download the software here on my git, extract it and open it through the platformio extension in visual code studio.
+Now you are ready to change the few variables in the code.
+                           
+Setup the MQTT broker in HA like shown in the video at these timeslots:
+Time: 2minuts - 4 minuts and then again at 9:30 minutes to 10:15 minutes.
+https://www.youtube.com/watch?v=1uxRvbbd0fc
 
-### Compiling
-I use [PlatformIO](https://platformio.org/) for compiling, uploading, and and maintaining dependencies for my code. If you install PlatformIO in a supported editor, building this project is quite simple. Just open the directory containing `platformio.ini` from this project, and click build/upload. If you use a different board than nodemcu, remember to change the `board` variable in `platformio.ini`.
-You may be able to use the Arduino tools with the esp8266 additions for compiling, but a few changes may be needed, including downloading dependencies manually.
+In your configuration.yaml you have to add:
+mqtt:
+  broker: IP address of the MQTT server (so you HA ip)
+  username: user name selected previously
+  password: password selected previously
+  discovery: true
+  discovery_prefix: homeassistant  
+
+If you do not want automatic discovery of the zones of Wavin then read further down in the readme to see how.
+
+The settings you just added in the MQTT setup is needed in the configuration of the Wavin ESP-01 software.
+Go to the PrivateConfig.h and edit the settings:
+
+WIFI_SSID = "Enter wireless SSID here";         // wifi ssid (name of your WiFi network)
+WIFI_PASS = "Enter wireless password here";     // wifi password
+
+MQTT_SERVER = "Enter mqtt server address here"; // mqtt server address without port number (your HA server address e.g. 192.168.0.1)
+MQTT_USER   = "Enter mqtt username here";       // mqtt user. Use "" for no username (just created in the previous video tutorial)
+MQTT_PASS   = "Enter mqtt password here";       // mqtt password. Use "" for no password (just created in the previous video tutorial)
+MQTT_PORT   = 1883;                             // mqtt port
+
+Now, you can hit program down in the left'ish corner of the visual code studio window (tooltips come when you hover the mouse over the small icons).
+When programmed insert the module into the board like shown in the picture and connect it to you AHC9000 using a regular ethernet cable.
+IMPORTANT: To ensure a stable running of the switch mode supply, insert the ESP-01 prior to powering the board with the RJ45. A load on the switch mode on board is good for its stability.
+
 
 ### Testing
 Assuming you have a working mqtt server setup, you should now be able to control your AHC-9000 using mqtt. If you have the [Mosquitto](https://mosquitto.org/) mqtt tools installed on your mqtt server, you can execude:
