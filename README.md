@@ -23,9 +23,9 @@ Look in the electronics folder for pictures of the programmer and the modificati
 
 ### My addition to the description:
 
-You have to install visual code studio (free) and the platformio extension https://platformio.org/ (google it if you have challenges).
-You then have to download the software here on my git, extract it and open it through the platformio extension in visual code studio.
-Now you are ready to change the few variables in the code.
+You can do either Visual Sudio code OR Arduino - for some reason Visual studio code does not always work for ESP-01 so i prefer Arduino...
+
+Now you have to change the few variables in the code first:
                            
 Setup the MQTT broker in HA like shown in the video at these timeslots:
 Time: 2minuts - 4 minuts and then again at 9:30 minutes to 10:15 minutes.
@@ -53,7 +53,21 @@ MQTT_USER   = "Enter mqtt username here";       // mqtt user. Use "" for no user
 MQTT_PASS   = "Enter mqtt password here";       // mqtt password. Use "" for no password (just created in the previous video tutorial)
 MQTT_PORT   = 1883;                             // mqtt port
 ```
+
+#### Platformio (Visual Code Studio)
+You have to install visual code studio (free) and the platformio extension https://platformio.org/ (google it if you have challenges).
+You then have to download the software here on my git, extract it and open it through the platformio extension in visual code studio.
 Now, you can hit program down in the left'ish corner of the visual code studio window (tooltips come when you hover the mouse over the small icons).
+
+
+#### Arduino
+
+Install the hardware support for ESP8266 as written in the readme under "Installing with Boards Manager"
+https://github.com/esp8266/Arduino
+Now, install the PubSubClient by Nick O'Leary through the Arduino Library Manager
+
+#### Important !
+
 When programmed insert the module into the board like shown in the picture and connect it to you AHC9000 using a regular ethernet cable.
 IMPORTANT: To ensure a stable running of the switch mode supply, insert the ESP-01 prior to powering the board with the RJ45. A load on the switch mode on board is good for its stability.
 
