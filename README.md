@@ -25,11 +25,10 @@ Look in the electronics folder for pictures of the programmer and the modificati
 
 You can do either Visual Sudio code OR Arduino - for some reason Visual studio code does not always work for ESP-01 so i prefer Arduino...
 
-Now you have to change the few variables in the code first:
-                           
-Setup the MQTT broker in HA like shown in the video at these timeslots:
-Time: 2minuts - 4 minuts and then again at 9:30 minutes to 10:15 minutes.
-https://www.youtube.com/watch?v=1uxRvbbd0fc
+I have made a small video on how to setup MQTT in HA (from a fresh install) and how to install the software on your ESP-01. Remember to set your ESP-01 in programming mode as described under hardware above.
+https://youtu.be/t77Gb6dozB0
+
+You have to change the few variables in the code as also shown in the video.
 
 In your configuration.yaml you have to add:
 ```
