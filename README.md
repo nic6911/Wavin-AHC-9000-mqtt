@@ -8,8 +8,9 @@ The following schematic shows how to connect an Esp8266 to the AHC-9000:
 
 
 My board design is made to fit with an ESP-01 board as seen here:
-![Bottom](/electronics/Bottom.png)
-![Top](/electronics/Top.png)
+![Bottom](/electronics/Bottom.PNG)
+![Top](/electronics/Top.PNG)
+
 
 For this setup to work you need:
 My ESP-01 Modus Interface board or similar
@@ -26,7 +27,7 @@ Look in the electronics folder for pictures of the programmer and the modificati
 You can do either Visual Sudio code OR Arduino - for some reason Visual studio code does not always work for ESP-01 so i prefer Arduino...
 
 I have made a small video on how to setup MQTT in HA (from a fresh install) and how to install the software on your ESP-01. Remember to set your ESP-01 in programming mode as described under hardware above.
-https://youtu.be/t77Gb6dozB0
+https://youtu.be/ZRJPDrEjLaU
 
 You have to change the few variables in the code as also shown in the video.
 
