@@ -22,6 +22,15 @@ Look in the electronics folder for pictures of the programmer and the modificati
 
 ## Software
 
+### UPDATE !
+
+I have modified the Arduino version to include a webserver that reveals itself with SSID "ESP01Modbus" if no WiFi connection can be established !
+It incorporates the Minimal HTTP updater by Christian Schwinne enabling you tu connect to the accesspoint and upload a new firmware with your correct credentials.
+
+To generate the new firmware simply open the arduino project, update credentials as needed in the PrivateConfig.h, select the generic ESP8266 board as target and hit build.
+You now have to locate the generated wavin.ino.bin which for Windows users is located at: C:\Users\username\AppData\Local\Temp\arduino_build_xxxx
+Connect to ESP01Modbus using password 11111111 and upload the firmware you just generated.
+
 ### My addition to the description:
 
 You can do either Visual Sudio code OR Arduino - for some reason Visual studio code does not always work for ESP-01 so i prefer Arduino...
