@@ -2,8 +2,10 @@
 This is a simple Esp8266 mqtt interface for Wavin AHC-9000/Jablotron AC-116, with the goal of being able to control this heating controller from a home automation system. The fork here is just an edit to fit a ESP-01 for which I have made a PCB giving a very compact unit.
 
 ## Hardware
+
+### Revision 1.0
 The AHC-9000 uses modbus to communicate over a half duplex RS422 connection. It has two RJ45 connectors for this purpose, which can both be used. 
-The following schematic shows how to connect an Esp8266 to the AHC-9000:
+The following schematic shows how my board is constructed in rev 1.0
 ![Schematic](/electronics/schematic.png)
 
 
@@ -11,6 +13,13 @@ My board design is made to fit with an ESP-01 board as seen here:
 ![Bottom](/electronics/Bottom.PNG)
 ![Top](/electronics/Top.PNG)
 
+
+### Revision 2.1
+To facilitate code versions using Modbus converters without the data direction controlled from the ESP I have implemented Automatic Direction Control. This also makes one more IO available for other uses.
+I have decided to add 2 x Optocoupler, one on each available IO, to have isolated outputs which I intend to use for my Nilan system.
+This effectively means that the rev 2.1 is a more general purpose hardware platform that in my case will be used for both my Wavin and Nilan setups.
+
+### Common
 
 For this setup to work you need:
 My ESP-01 Modus Interface board or similar
