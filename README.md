@@ -19,6 +19,10 @@ To facilitate code versions using Modbus converters without the data direction c
 I have decided to add 2 x Optocoupler, one on each available IO, to have isolated outputs which I intend to use for my Nilan system.
 This effectively means that the rev 2.1 is a more general purpose hardware platform that in my case will be used for both my Wavin and Nilan setups.
 
+My board design rev 2.1 is seen here:
+![Bottom](/electronics/Rev2_1/Bottom.PNG)
+![Top](/electronics/Rev2_1/Top.PNG)
+
 ### Common
 
 For this setup to work you need:
@@ -39,6 +43,10 @@ It incorporates the Minimal HTTP updater by Christian Schwinne enabling you tu c
 To generate the new firmware simply open the arduino project, update credentials as needed in the PrivateConfig.h, select the generic ESP8266 board as target and hit build.
 You now have to locate the generated wavin.ino.bin which for Windows users is located at: C:\Users\username\AppData\Local\Temp\arduino_build_xxxx
 Connect to ESP01Modbus using password 11111111 and upload the firmware you just generated.
+
+A small video showing how to do it can be found here:
+https://youtu.be/2H5gkzoha98
+Remember to watch https://youtu.be/ZRJPDrEjLaU first where I install the Arduino libraries required for the code to compile !
 
 ### My addition to the description:
 
