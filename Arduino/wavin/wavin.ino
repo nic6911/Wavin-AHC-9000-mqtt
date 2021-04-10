@@ -232,6 +232,7 @@ void publishConfiguration(uint8_t channel)
 
 void setup()
 {
+  delay(10000);
   uint8_t fails = 0;
   uint8_t mac[6];
   WiFi.macAddress(mac);
