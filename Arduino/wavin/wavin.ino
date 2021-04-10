@@ -261,6 +261,7 @@ void setup()
   }
   if(fails>1)
   {
+    WiFi.mode(WIFI_OFF);
     WiFi.softAP(apSSID, apPass);
     server.onNotFound([](){
       server.send(200, "text/html", PAGE_index);
