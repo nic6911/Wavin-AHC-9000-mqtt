@@ -3,6 +3,9 @@ This is a simple Esp8266 mqtt interface for Wavin AHC-9000/Jablotron AC-116, wit
 
 ## Hardware
 
+The Hardware used here is a design done by me (nic6911) and is a mutli-purpose ESP-01 Modbus module that was intended for Wavin AHC9000 and Nilan ventilation. But since it is pretty generic it will suit most modus applications.
+The hardware includes buck converter supplying the ESP-01 and Modbus module with 3.3V from anything going from 8-24V (28V absolute max rating) as 12V and 24V are usually available on these systems for powering something like this.
+
 ### Revision 1.0
 The AHC-9000 uses modbus to communicate over a half duplex RS422 connection. It has two RJ45 connectors for this purpose, which can both be used. 
 The following schematic shows how my board is constructed in rev 1.0
@@ -18,6 +21,9 @@ My board design is made to fit with an ESP-01 board as seen here:
 To facilitate code versions using Modbus converters without the data direction controlled from the ESP I have implemented Automatic Direction Control. This also makes one more IO available for other uses.
 I have decided to add 2 x Optocoupler, one on each available IO, to have isolated outputs which I intend to use for my Nilan system.
 This effectively means that the rev 2.1 is a more general purpose hardware platform that in my case will be used for both my Wavin and Nilan setups.
+
+The following schematic shows how my board is constructed in rev 2.1
+![Schematic](/electronics/Rev2_1/schematic.png)
 
 My board design rev 2.1 is seen here:
 ![Bottom](/electronics/Rev2_1/Bottom.PNG)
