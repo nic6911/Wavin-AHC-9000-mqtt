@@ -23,7 +23,7 @@ I have decided to add 2 x Optocoupler, one on each available IO, to have isolate
 This effectively means that the rev 2.1 is a more general purpose hardware platform that in my case will be used for both my Wavin and Nilan setups.
 
 The following schematic shows how my board is constructed in rev 2.1
-![Schematic](/electronics/Rev2_1/schematic.png)
+![Schematic](/electronics/Rev2_1/schematic.PNG)
 
 My board design rev 2.1 is seen here:
 ![Bottom](/electronics/Rev2_1/Bottom.PNG)
