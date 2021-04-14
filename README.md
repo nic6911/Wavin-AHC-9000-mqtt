@@ -1,6 +1,10 @@
 # Wavin-AHC-9000-mqtt
 This is a simple Esp8266 mqtt interface for Wavin AHC-9000/Jablotron AC-116, with the goal of being able to control this heating controller from a home automation system. The fork here is just an edit to fit a ESP-01 for which I have made a PCB giving a very compact unit.
 
+## Disclaimer
+Do this at your own risk ! You are interfacing with hardware that you can potentially damage if you do not connect things as required !
+Using the hardware and code presented here is done at you own risk. The hardware and software has been tested on Wavin AHC9000 and Nilan Comfort 300 without issues.
+
 ## Hardware
 
 The Hardware used here is a design done by me (nic6911) and is a mutli-purpose ESP-01 Modbus module that was intended for Wavin AHC9000 and Nilan ventilation. But since it is pretty generic it will suit most modus applications.
@@ -28,6 +32,11 @@ The following schematic shows how my board is constructed in rev 2.1
 My board design rev 2.1 is seen here:
 ![Bottom](/electronics/Rev2_1/Bottom.PNG)
 ![Top](/electronics/Rev2_1/Top.PNG)
+
+A wiring example on a Comfort 300 and Wavin AHC9000 is shown here:
+![Top](/electronics/Rev2_1/Connections.png)
+
+On the Wavin you simply use a patch cable (straight) and connect it from the module to the Modbus port and then you are done :)
 
 ### Common
 
