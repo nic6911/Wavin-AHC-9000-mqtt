@@ -59,18 +59,21 @@ To generate the new firmware simply open the arduino project, update credentials
 You now have to locate the generated wavin.ino.bin which for Windows users is located at: C:\Users\username\AppData\Local\Temp\arduino_build_xxxx
 Connect to ESP01Modbus using password 11111111 and upload the firmware you just generated.
 
-A small video showing how to do it can be found here:
+### Video Tutorials
+I have made a couple of video tutorials.
+
+For setting up Home Assistant for MQTT, finding the Wavin client and adding zones looke here:
+https://youtu.be/kwnt9SaQ6Jc
+
+For the above to work you have to have a programmed ESP-01 talking modbus (like my module with ESP-01) which is shown next.
+
+For programming the ESP-01 using a programmer look here:
+https://youtu.be/PWJ3N4B8Pc4
+
+If you have a pre-programmed ESP-01 with OTA support then you have to install the library dependencies as above but do not have to use a programmer. You can then program it like shown here:
 https://youtu.be/2H5gkzoha98
-Remember to watch https://youtu.be/ZRJPDrEjLaU first where I install the Arduino libraries required for the code to compile !
 
-### My addition to the description:
-
-You can do either Visual Sudio code OR Arduino - for some reason Visual studio code does not always work for ESP-01 so i prefer Arduino...
-
-I have made a small video on how to setup MQTT in HA (from a fresh install) and how to install the software on your ESP-01. Remember to set your ESP-01 in programming mode as described under hardware above.
-https://youtu.be/ZRJPDrEjLaU
-
-You have to change the few variables in the code as also shown in the video.
+### Important config changes
 
 In your configuration.yaml you have to add:
 ```
@@ -94,11 +97,6 @@ MQTT_USER   = "Enter mqtt username here";       // mqtt user. Use "" for no user
 MQTT_PASS   = "Enter mqtt password here";       // mqtt password. Use "" for no password (just created in the previous video tutorial)
 MQTT_PORT   = 1883;                             // mqtt port
 ```
-
-#### Platformio (Visual Code Studio)
-You have to install visual code studio (free) and the platformio extension https://platformio.org/ (google it if you have challenges).
-You then have to download the software here on my git, extract it and open it through the platformio extension in visual code studio.
-Now, you can hit program down in the left'ish corner of the visual code studio window (tooltips come when you hover the mouse over the small icons).
 
 
 #### Arduino
