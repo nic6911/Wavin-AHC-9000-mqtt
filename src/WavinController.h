@@ -18,10 +18,12 @@ class WavinController
     static const uint8_t CATEGORY_SCHEDULES =   0x06;
     static const uint8_t CATEGORY_INFO =        0x07;
 
-    static const uint8_t ELEMENTS_AIR_TEMPERATURE = 0x04;
-    static const uint8_t ELEMENTS_REL_HUMIDITY = 0x07;
-    static const uint8_t ELEMENTS_BATTERY_STATUS  = 0x0A;
-    static const uint8_t ELEMENTS_SYNC_GROUP      = 0x0B;
+    static const uint8_t ELEMENTS_AIR_TEMPERATURE   = 0x04;
+    static const uint8_t ELEMENTS_FLOOR_TEMPERATURE = 0x05;
+    static const uint8_t ELEMENTS_DEW_POINT         = 0x06;
+    static const uint8_t ELEMENTS_REL_HUMIDITY      = 0x07;
+    static const uint8_t ELEMENTS_BATTERY_STATUS    = 0x0A;
+    static const uint8_t ELEMENTS_SYNC_GROUP        = 0x0B;
 
     static const uint8_t PACKED_DATA_MANUAL_TEMPERATURE = 0x00;
     static const uint8_t PACKED_DATA_STANDBY_TEMPERATURE = 0x04;
