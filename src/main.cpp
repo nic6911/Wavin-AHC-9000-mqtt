@@ -74,6 +74,9 @@ const uint16_t POLL_TIME_MS = 5000;
 
 struct lastKnownValue_t {
   uint16_t airtemperature;
+  uint16_t humidity;
+  uint16_t dewpoint;
+  uint16_t floortemperature;
   uint16_t setpoint;
   uint16_t battery;
   uint16_t status;
@@ -170,6 +173,9 @@ void resetLastSentValues()
   for(int8_t i=0; i<WavinController::NUMBER_OF_CHANNELS; i++)
   {
     lastSentValues[i].airtemperature = LAST_VALUE_UNKNOWN;
+    lastSentValues[i].humidity = LAST_VALUE_UNKNOWN;
+    lastSentValues[i].dewpoint = LAST_VALUE_UNKNOWN;
+    lastSentValues[i].floortemperature = LAST_VALUE_UNKNOWN;
     lastSentValues[i].setpoint = LAST_VALUE_UNKNOWN;
     lastSentValues[i].battery = LAST_VALUE_UNKNOWN;
     lastSentValues[i].status = LAST_VALUE_UNKNOWN;
@@ -401,11 +407,41 @@ void loop()
               uint16_t temperature = registers[WavinController::ELEMENTS_AIR_TEMPERATURE];
               uint16_t battery = registers[WavinController::ELEMENTS_BATTERY_STATUS]; // In 10% steps
 
+              // Air temperature reading
               String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENT);
               String payload = temperatureAsFloatString(temperature);
 
               publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].airtemperature));
 
+
+              // Floor temperature reading
+              temperature = registers[WavinController::ELEMENTS_FLOOR_TEMPERATURE];
+
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENTFLOOR);
+              payload = temperatureAsFloatString(temperature);
+
+              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].floortemperature));
+
+
+              // Humidity reading
+              uint16_t humidity = registers[WavinController::ELEMENTS_REL_HUMIDITY];
+
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_HUMIDITY);
+              payload = temperatureAsFloatString(humidity); // same logic for humidity as with temperatures - just reuse
+
+              publishIfNewValue(topic, payload, humidity, &(lastSentValues[channel].humidity));
+
+
+              // Dew point temperature reading
+              temperature = registers[WavinController::ELEMENTS_DEW_POINT];
+
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_DEWPOINT);
+              payload = temperatureAsFloatString(temperature);
+
+              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].dewpoint));
+
+
+              // Battery status
               topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_BATTERY);
               payload = String(battery*10);
 
