@@ -73,7 +73,7 @@ unsigned long lastUpdateTime = 0;
 const uint16_t POLL_TIME_MS = 5000;
 
 struct lastKnownValue_t {
-  uint16_t temperature;
+  uint16_t airtemperature;
   uint16_t setpoint;
   uint16_t battery;
   uint16_t status;
@@ -169,7 +169,7 @@ void resetLastSentValues()
 {
   for(int8_t i=0; i<WavinController::NUMBER_OF_CHANNELS; i++)
   {
-    lastSentValues[i].temperature = LAST_VALUE_UNKNOWN;
+    lastSentValues[i].airtemperature = LAST_VALUE_UNKNOWN;
     lastSentValues[i].setpoint = LAST_VALUE_UNKNOWN;
     lastSentValues[i].battery = LAST_VALUE_UNKNOWN;
     lastSentValues[i].status = LAST_VALUE_UNKNOWN;
@@ -404,7 +404,7 @@ void loop()
               String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENT);
               String payload = temperatureAsFloatString(temperature);
 
-              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].temperature));
+              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].airtemperature));
 
               topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_BATTERY);
               payload = String(battery*10);
