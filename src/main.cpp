@@ -133,7 +133,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
   terminatedPayload[length] = 0;
   String payloadString = String(terminatedPayload);
 
-  uint8_t id = getIdFromTopic(topic);
+  uint8_t id = getIdFromTopic(topic) - 1; // convert to zero-index. Topic correspond to 1 as first index
 
   if(topicString.endsWith(MQTT_SUFFIX_SETPOINT_SET))
   {
@@ -192,7 +192,7 @@ void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t
   {
     if (mqttClient.publish(topic.c_str(), payload.c_str(), true))
     {
-        *lastSentValue = newValue;
+      *lastSentValue = newValue;
     }
     else
     {
@@ -206,14 +206,17 @@ void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t
 // See https://www.home-assistant.io/docs/mqtt/discovery/
 void publishConfiguration(uint8_t channel)
 {
-  String climateTopic = String("homeassistant/climate/" + mqttDeviceNameWithMac + "/" + channel + "/config");
+  uint8_t announcedChannel = channel + 1; // as the channels on the ahc-9000 begins with 1 not 0
+  String mqttFirstPart = MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel;
+
+  String climateTopic = String("homeassistant/climate/" + mqttDeviceNameWithMac + "/" + announcedChannel + "/config");
   String climateMessage = String(
-    "{\"name\": \"" +mqttDeviceNameWithMac + "_" + channel +  "_climate\", "
-    "\"current_temperature_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENT + "\", " 
-    "\"temperature_command_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_SETPOINT_SET + "\", " 
-    "\"temperature_state_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_SETPOINT_GET + "\", " 
-    "\"mode_command_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_MODE_SET + "\", " 
-    "\"mode_state_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_MODE_GET + "\", " 
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_climate\", "
+    "\"current_temperature_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_CURRENT + "\", " 
+    "\"temperature_command_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_SETPOINT_SET + "\", " 
+    "\"temperature_state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_SETPOINT_GET + "\", " 
+    "\"mode_command_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_MODE_SET + "\", " 
+    "\"mode_state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_MODE_GET + "\", " 
     "\"modes\": [\"" + MQTT_VALUE_MODE_MANUAL + "\", \"" + MQTT_VALUE_MODE_STANDBY + "\"], " 
     "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
     "\"payload_available\": \"True\", "
@@ -221,10 +224,38 @@ void publishConfiguration(uint8_t channel)
     "\"qos\": \"0\"}"
   );
   
-  String batteryTopic = String("homeassistant/sensor/" + mqttDeviceNameWithMac + "/" + channel + "/config");
+  String sensorsTopic = String("homeassistant/sensor/" + mqttDeviceNameWithMac + "/" + announcedChannel + "/config");
+  String sensorsOutputMessage = String(
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_output\", "
+    "\"state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_OUTPUT + "\", " 
+    "\"unit_of_measurement\": \"\", " 
+    "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
+    "\"payload_available\": \"True\", "
+    "\"payload_not_available\": \"False\", "
+    "\"qos\": \"0\"}"
+  );
+  String sensorsFloorMessage = String(
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_floortemperature\", "
+    "\"state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_CURRENTFLOOR + "\", " 
+    "\"unit_of_measurement\": \"°C\", " 
+    "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
+    "\"payload_available\": \"True\", "
+    "\"payload_not_available\": \"False\", "
+    "\"qos\": \"0\"}"
+  );
+  String sensorsHumidityMessage = String(
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_humidity\", "
+    "\"state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_HUMIDITY + "\", " 
+    "\"unit_of_measurement\": \"%\", " 
+    "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
+    "\"payload_available\": \"True\", "
+    "\"payload_not_available\": \"False\", "
+    "\"qos\": \"0\"}"
+  );
+
   String batteryMessage = String(
-    "{\"name\": \"" +mqttDeviceNameWithMac + "_" + channel +  "_battery\", "
-    "\"state_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + "/battery\", " 
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_battery\", "
+    "\"state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_BATTERY + "\", " 
     "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
     "\"payload_available\": \"True\", "
     "\"payload_not_available\": \"False\", "
@@ -234,7 +265,9 @@ void publishConfiguration(uint8_t channel)
   );
 
   mqttClient.publish(climateTopic.c_str(), climateMessage.c_str(), true);  
-  mqttClient.publish(batteryTopic.c_str(), batteryMessage.c_str(), true);
+  mqttClient.publish(sensorsTopic.c_str(), sensorsFloorMessage.c_str(), true);
+  mqttClient.publish(sensorsTopic.c_str(), sensorsHumidityMessage.c_str(), true);
+  mqttClient.publish(sensorsTopic.c_str(), batteryMessage.c_str(), true);
   
   configurationPublished[channel] = true;
 }
