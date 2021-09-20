@@ -41,6 +41,9 @@ const String   MQTT_SUFFIX_SETPOINT_GET = "/target";
 const String   MQTT_SUFFIX_SETPOINT_SET = "/target_set";
 const String   MQTT_SUFFIX_MODE_GET     = "/mode";
 const String   MQTT_SUFFIX_MODE_SET     = "/mode_set";
+const String   MQTT_SUFFIX_CURRENTFLOOR = "/floortemperature";
+const String   MQTT_SUFFIX_HUMIDITY     = "/humidity";
+const String   MQTT_SUFFIX_DEWPOINT     = "/dewpoint";
 const String   MQTT_SUFFIX_BATTERY      = "/battery";
 const String   MQTT_SUFFIX_OUTPUT       = "/output";
 
