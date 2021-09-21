@@ -346,23 +346,26 @@ void setup()
 }
 
 
+bool updateServerInitialised = false;
+
 void loop()
 {
-  if(enableHttpUpdater) // enable access point and allow update of the esp
+  if(enableHttpUpdater) // allow update of the esp
   {
-    WiFi.mode(WIFI_OFF);
-    WiFi.softAP(apSSID, apPass);
+    //WiFi.mode(WIFI_OFF);
+    //WiFi.softAP(apSSID, apPass);
+    if (!updateServerInitialised) // initialise the httpUpdater
+    {
     server.onNotFound([](){
       server.send(200, "text/html", PAGE_index);
     });
     httpUpdater.setup(&server);
     server.begin();
-  
-    while(1)
-    {
-      server.handleClient();
-      yield();
+
+      updateServerInitialised = true;
     }
+  
+      server.handleClient();
   }
 
   if (WiFi.status() != WL_CONNECTED)
