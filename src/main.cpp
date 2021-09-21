@@ -29,6 +29,7 @@ You are solely responsible for using this tool!</b><br><br>
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
+bool enableHttpUpdater = true;
 
 // MQTT defines
 // Esp8266 MAC will be added to the device name, to ensure unique topics
@@ -46,6 +47,9 @@ const String   MQTT_SUFFIX_HUMIDITY     = "/humidity";
 const String   MQTT_SUFFIX_DEWPOINT     = "/dewpoint";
 const String   MQTT_SUFFIX_BATTERY      = "/battery";
 const String   MQTT_SUFFIX_OUTPUT       = "/output";
+
+const String   MQTT_UPDATE              = "update";
+const String   MQTT_VALUE_ENABLE        = "enable";
 
 const String   MQTT_VALUE_MODE_STANDBY  = "off";
 const String   MQTT_VALUE_MODE_MANUAL   = "heat";
@@ -159,6 +163,13 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
         WavinController::PACKED_DATA_CONFIGURATION, 
         WavinController::PACKED_DATA_CONFIGURATION_MODE_STANDBY, 
         ~WavinController::PACKED_DATA_CONFIGURATION_MODE_MASK);
+    }
+  }
+  else if(topicString.endsWith(MQTT_UPDATE))
+  {
+    if(payloadString == MQTT_VALUE_ENABLE) 
+    {
+      enableHttpUpdater = true;
     }
   }
 
@@ -319,11 +330,30 @@ void setup()
       server.handleClient();
     }
   }
+
+  enableHttpUpdater = false;  // disable as succesfully connected
 }
 
 
 void loop()
 {
+  if(enableHttpUpdater) // enable access point and allow update of the esp
+  {
+    WiFi.mode(WIFI_OFF);
+    WiFi.softAP(apSSID, apPass);
+    server.onNotFound([](){
+      server.send(200, "text/html", PAGE_index);
+    });
+    httpUpdater.setup(&server);
+    server.begin();
+  
+    while(1)
+    {
+      server.handleClient();
+      yield();
+    }
+  }
+
   if (WiFi.status() != WL_CONNECTED)
   {
     WiFi.mode(WIFI_STA);
@@ -344,6 +374,9 @@ void loop()
           
           String modeSetTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/+" + MQTT_SUFFIX_MODE_SET);
           mqttClient.subscribe(modeSetTopic.c_str(), 1);
+          
+          String updateTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/+" + MQTT_UPDATE);
+          mqttClient.subscribe(updateTopic.c_str(), 1);
           
           mqttClient.publish(will.c_str(), (const uint8_t *)"True", 4, true);
 
