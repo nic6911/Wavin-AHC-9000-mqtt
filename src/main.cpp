@@ -375,7 +375,7 @@ void loop()
           String modeSetTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/+" + MQTT_SUFFIX_MODE_SET);
           mqttClient.subscribe(modeSetTopic.c_str(), 1);
 
-          String updateTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/+" + MQTT_UPDATE);
+          String updateTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + MQTT_UPDATE);
           mqttClient.subscribe(updateTopic.c_str(), 1);
           
           mqttClient.publish(will.c_str(), (const uint8_t *)"True", 4, true);
