@@ -201,7 +201,7 @@ void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t
 {
   if (newValue != *lastSentValue)
   {
-    if (mqttClient.publish(topic.c_str(), payload.c_str(), true))
+    if (mqttClient.publish(topic.c_str(), payload.c_str(), false))
     {
       *lastSentValue = newValue;
     }
