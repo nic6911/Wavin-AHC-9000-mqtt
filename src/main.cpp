@@ -374,7 +374,7 @@ void loop()
           
           String modeSetTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/+" + MQTT_SUFFIX_MODE_SET);
           mqttClient.subscribe(modeSetTopic.c_str(), 1);
-          
+
           String updateTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/+" + MQTT_UPDATE);
           mqttClient.subscribe(updateTopic.c_str(), 1);
           
@@ -403,6 +403,7 @@ void loop()
 
       for(uint8_t channel = 0; channel < WavinController::NUMBER_OF_CHANNELS; channel++)
       {
+        uint8_t announcedChannel = channel + 1;
         if (wavinController.readRegisters(WavinController::CATEGORY_CHANNELS, channel, WavinController::CHANNELS_PRIMARY_ELEMENT, 1, registers))
         {
           uint16_t primaryElement = registers[0] & WavinController::CHANNELS_PRIMARY_ELEMENT_ELEMENT_MASK;
@@ -426,7 +427,7 @@ void loop()
           {
             uint16_t setpoint = registers[0];
 
-            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_SETPOINT_GET);
+            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_SETPOINT_GET);
             String payload = temperatureAsFloatString(setpoint);
 
             publishIfNewValue(topic, payload, setpoint, &(lastSentValues[channel].setpoint));
@@ -437,7 +438,7 @@ void loop()
           {
             uint16_t mode = registers[0] & WavinController::PACKED_DATA_CONFIGURATION_MODE_MASK; 
 
-            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_MODE_GET);
+            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_MODE_GET);
             if(mode == WavinController::PACKED_DATA_CONFIGURATION_MODE_STANDBY)
             {
               publishIfNewValue(topic, MQTT_VALUE_MODE_STANDBY, mode, &(lastSentValues[channel].mode));
@@ -453,7 +454,7 @@ void loop()
           {
             uint16_t status = registers[0] & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK;
 
-            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_OUTPUT);
+            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_OUTPUT);
             String payload;
             if (status & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK)
               payload = "on";
@@ -474,7 +475,7 @@ void loop()
               uint16_t battery = registers[WavinController::ELEMENTS_BATTERY_STATUS]; // In 10% steps
 
               // Air temperature reading
-              String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENT);
+              String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_CURRENT);
               String payload = temperatureAsFloatString(temperature);
 
               publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].airtemperature));
@@ -483,7 +484,7 @@ void loop()
               // Floor temperature reading
               temperature = registers[WavinController::ELEMENTS_FLOOR_TEMPERATURE];
 
-              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENTFLOOR);
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_CURRENTFLOOR);
               payload = temperatureAsFloatString(temperature);
 
               publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].floortemperature));
@@ -492,7 +493,7 @@ void loop()
               // Humidity reading
               uint16_t humidity = registers[WavinController::ELEMENTS_REL_HUMIDITY];
 
-              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_HUMIDITY);
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_HUMIDITY);
               payload = temperatureAsFloatString(humidity); // same logic for humidity as with temperatures - just reuse
 
               publishIfNewValue(topic, payload, humidity, &(lastSentValues[channel].humidity));
@@ -501,14 +502,14 @@ void loop()
               // Dew point temperature reading
               temperature = registers[WavinController::ELEMENTS_DEW_POINT];
 
-              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_DEWPOINT);
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_DEWPOINT);
               payload = temperatureAsFloatString(temperature);
 
               publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].dewpoint));
 
 
               // Battery status
-              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_BATTERY);
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_BATTERY);
               payload = String(battery*10);
 
               publishIfNewValue(topic, payload, battery, &(lastSentValues[channel].battery));
