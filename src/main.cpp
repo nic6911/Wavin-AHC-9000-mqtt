@@ -125,6 +125,8 @@ uint8_t getIdFromTopic(char* topic)
 }
 
 
+void resetLastSentValues(); // declare function as it is needed in mqttCallback
+
 void mqttCallback(char* topic, byte* payload, unsigned int length)
 {
   String topicString = String(topic);
@@ -170,6 +172,14 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
     if(payloadString == MQTT_VALUE_ENABLE) 
     {
       enableHttpUpdater = true;
+    }
+  }
+  else if(topicString.equalsIgnoreCase("homeassistant/status") || topicString.equalsIgnoreCase("hass/status"))
+  {
+    // resend values on mqtt when homeassistant gets online
+    if(payloadString.equalsIgnoreCase("online")) 
+    {
+      resetLastSentValues();
     }
   }
 
@@ -391,6 +401,9 @@ void loop()
 
           String updateTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + MQTT_UPDATE);
           mqttClient.subscribe(updateTopic.c_str(), 1);
+          
+          mqttClient.subscribe("homeassistant/status", 1);
+          mqttClient.subscribe("hass/status", 1);
           
           mqttClient.publish(will.c_str(), (const uint8_t *)"True", 4, true);
 
