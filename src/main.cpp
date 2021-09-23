@@ -2,6 +2,34 @@
 #include <PubSubClient.h>
 #include "WavinController.h"
 #include "PrivateConfig.h"
+#include <ESP8266WebServer.h>
+#include <ESP8266HTTPUpdateServer.h>
+
+char apSSID[] = "ESP01Modbus";
+char apPass[] = "11111111";
+
+const char PAGE_index[] PROGMEM = R"=====(
+<!DOCTYPE html>
+<html><head><title>Flash this ESP8266!</title></head><body>
+<h2>Welcome!</h2>
+You are successfully connected to your ESP8266 via its WiFi.<br>
+Please click the button to proceed and upload a new binary firmware!<br><br>
+<b>Be sure to double check the firmware (.bin) is suitable for your chip!<br>
+I am not to be held liable if you accidentally flash a cat pic instead or something goes wrong during the update!<br>
+You are solely responsible for using this tool!</b><br><br>
+<form><input type="button" value="Select firmware..." onclick="window.location.href='/update'" />
+</form><br>
+(c) 2017 Christian Schwinne <br>
+<i>Licensed under the MIT license</i> <br>
+<i>Uses libraries:</i> <br>
+<i>ESP8266 Arduino Core</i> <br>
+</body></html>
+)=====";
+
+ESP8266WebServer server(80);
+ESP8266HTTPUpdateServer httpUpdater;
+
+bool enableHttpUpdater = true;
 
 // MQTT defines
 // Esp8266 MAC will be added to the device name, to ensure unique topics
@@ -14,8 +42,14 @@ const String   MQTT_SUFFIX_SETPOINT_GET = "/target";
 const String   MQTT_SUFFIX_SETPOINT_SET = "/target_set";
 const String   MQTT_SUFFIX_MODE_GET     = "/mode";
 const String   MQTT_SUFFIX_MODE_SET     = "/mode_set";
+const String   MQTT_SUFFIX_CURRENTFLOOR = "/floortemperature";
+const String   MQTT_SUFFIX_HUMIDITY     = "/humidity";
+const String   MQTT_SUFFIX_DEWPOINT     = "/dewpoint";
 const String   MQTT_SUFFIX_BATTERY      = "/battery";
 const String   MQTT_SUFFIX_OUTPUT       = "/output";
+
+const String   MQTT_UPDATE              = "update";
+const String   MQTT_VALUE_ENABLE        = "enable";
 
 const String   MQTT_VALUE_MODE_STANDBY  = "off";
 const String   MQTT_VALUE_MODE_MANUAL   = "heat";
@@ -43,7 +77,10 @@ unsigned long lastUpdateTime = 0;
 const uint16_t POLL_TIME_MS = 5000;
 
 struct lastKnownValue_t {
-  uint16_t temperature;
+  uint16_t airtemperature;
+  uint16_t humidity;
+  uint16_t dewpoint;
+  uint16_t floortemperature;
   uint16_t setpoint;
   uint16_t battery;
   uint16_t status;
@@ -88,6 +125,8 @@ uint8_t getIdFromTopic(char* topic)
 }
 
 
+void resetLastSentValues(); // declare function as it is needed in mqttCallback
+
 void mqttCallback(char* topic, byte* payload, unsigned int length)
 {
   String topicString = String(topic);
@@ -100,7 +139,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
   terminatedPayload[length] = 0;
   String payloadString = String(terminatedPayload);
 
-  uint8_t id = getIdFromTopic(topic);
+  uint8_t id = getIdFromTopic(topic) - 1; // convert to zero-index. Topic correspond to 1 as first index
 
   if(topicString.endsWith(MQTT_SUFFIX_SETPOINT_SET))
   {
@@ -128,6 +167,21 @@ void mqttCallback(char* topic, byte* payload, unsigned int length)
         ~WavinController::PACKED_DATA_CONFIGURATION_MODE_MASK);
     }
   }
+  else if(topicString.endsWith(MQTT_UPDATE))
+  {
+    if(payloadString == MQTT_VALUE_ENABLE) 
+    {
+      enableHttpUpdater = true;
+    }
+  }
+  else if(topicString.equalsIgnoreCase("homeassistant/status") || topicString.equalsIgnoreCase("hass/status"))
+  {
+    // resend values on mqtt when homeassistant gets online
+    if(payloadString.equalsIgnoreCase("online")) 
+    {
+      resetLastSentValues();
+    }
+  }
 
   // Force re-read of registers from controller now
   lastUpdateTime = 0;
@@ -139,7 +193,10 @@ void resetLastSentValues()
 {
   for(int8_t i=0; i<WavinController::NUMBER_OF_CHANNELS; i++)
   {
-    lastSentValues[i].temperature = LAST_VALUE_UNKNOWN;
+    lastSentValues[i].airtemperature = LAST_VALUE_UNKNOWN;
+    lastSentValues[i].humidity = LAST_VALUE_UNKNOWN;
+    lastSentValues[i].dewpoint = LAST_VALUE_UNKNOWN;
+    lastSentValues[i].floortemperature = LAST_VALUE_UNKNOWN;
     lastSentValues[i].setpoint = LAST_VALUE_UNKNOWN;
     lastSentValues[i].battery = LAST_VALUE_UNKNOWN;
     lastSentValues[i].status = LAST_VALUE_UNKNOWN;
@@ -154,9 +211,9 @@ void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t
 {
   if (newValue != *lastSentValue)
   {
-    if (mqttClient.publish(topic.c_str(), payload.c_str(), true))
+    if (mqttClient.publish(topic.c_str(), payload.c_str(), false))
     {
-        *lastSentValue = newValue;
+      *lastSentValue = newValue;
     }
     else
     {
@@ -170,25 +227,70 @@ void publishIfNewValue(String topic, String payload, uint16_t newValue, uint16_t
 // See https://www.home-assistant.io/docs/mqtt/discovery/
 void publishConfiguration(uint8_t channel)
 {
-  String climateTopic = String("homeassistant/climate/" + mqttDeviceNameWithMac + "/" + channel + "/config");
+  uint8_t announcedChannel = channel + 1; // as the channels on the ahc-9000 begins with 1 not 0
+  String mqttFirstPart = MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel;
+
+  String climateTopic = String("homeassistant/climate/" + mqttDeviceNameWithMac + "/" + announcedChannel + "/config");
   String climateMessage = String(
-    "{\"name\": \"" +mqttDeviceNameWithMac + "_" + channel +  "_climate\", "
-    "\"current_temperature_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENT + "\", " 
-    "\"temperature_command_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_SETPOINT_SET + "\", " 
-    "\"temperature_state_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_SETPOINT_GET + "\", " 
-    "\"mode_command_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_MODE_SET + "\", " 
-    "\"mode_state_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_MODE_GET + "\", " 
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_climate\", "
+    "\"current_temperature_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_CURRENT + "\", " 
+    "\"temperature_command_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_SETPOINT_SET + "\", " 
+    "\"temperature_state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_SETPOINT_GET + "\", " 
+    "\"mode_command_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_MODE_SET + "\", " 
+    "\"mode_state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_MODE_GET + "\", " 
     "\"modes\": [\"" + MQTT_VALUE_MODE_MANUAL + "\", \"" + MQTT_VALUE_MODE_STANDBY + "\"], " 
     "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
     "\"payload_available\": \"True\", "
     "\"payload_not_available\": \"False\", "
     "\"qos\": \"0\"}"
   );
+  mqttClient.publish(climateTopic.c_str(), climateMessage.c_str(), true);  
   
-  String batteryTopic = String("homeassistant/sensor/" + mqttDeviceNameWithMac + "/" + channel + "/config");
-  String batteryMessage = String(
-    "{\"name\": \"" +mqttDeviceNameWithMac + "_" + channel +  "_battery\", "
-    "\"state_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + "/battery\", " 
+  
+  String sensorsTopic = String("homeassistant/binary_sensor/" + mqttDeviceNameWithMac + "/" + announcedChannel + "_output/config");
+  String sensorsMessage = String(
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_output\", "
+    "\"state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_OUTPUT + "\", " 
+    "\"payload_on\": \"on\", "
+    "\"payload_off\": \"off\", "
+    "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
+    "\"payload_available\": \"True\", "
+    "\"payload_not_available\": \"False\", "
+    "\"qos\": \"0\"}"
+  );
+  mqttClient.publish(sensorsTopic.c_str(), sensorsMessage.c_str(), true);
+
+  sensorsTopic = String("homeassistant/sensor/" + mqttDeviceNameWithMac + "/" + announcedChannel + "_floortemp/config");
+  sensorsMessage = String(
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_floortemperature\", "
+    "\"state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_CURRENTFLOOR + "\", " 
+    "\"device_class\": \"temperature\", "
+    "\"unit_of_measurement\": \"°C\", " 
+    "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
+    "\"payload_available\": \"True\", "
+    "\"payload_not_available\": \"False\", "
+    "\"qos\": \"0\"}"
+  );
+  mqttClient.publish(sensorsTopic.c_str(), sensorsMessage.c_str(), true);
+
+  sensorsTopic = String("homeassistant/sensor/" + mqttDeviceNameWithMac + "/" + announcedChannel + "_humidity/config");
+  sensorsMessage = String(
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_humidity\", "
+    "\"state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_HUMIDITY + "\", " 
+    "\"device_class\": \"humidity\", "
+    "\"unit_of_measurement\": \"%\", " 
+    "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
+    "\"payload_available\": \"True\", "
+    "\"payload_not_available\": \"False\", "
+    "\"qos\": \"0\"}"
+  );
+  mqttClient.publish(sensorsTopic.c_str(), sensorsMessage.c_str(), true);
+
+
+  sensorsTopic = String("homeassistant/sensor/" + mqttDeviceNameWithMac + "/" + announcedChannel + "_battery/config");
+  sensorsMessage = String(
+    "{\"name\": \"" + mqttDeviceNameWithMac + "_" + announcedChannel +  "_battery\", "
+    "\"state_topic\": \"" + mqttFirstPart + MQTT_SUFFIX_BATTERY + "\", " 
     "\"availability_topic\": \"" + MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE +"\", "
     "\"payload_available\": \"True\", "
     "\"payload_not_available\": \"False\", "
@@ -196,9 +298,8 @@ void publishConfiguration(uint8_t channel)
     "\"unit_of_measurement\": \"%\", "
     "\"qos\": \"0\"}"
   );
+  mqttClient.publish(sensorsTopic.c_str(), sensorsMessage.c_str(), true);
 
-  mqttClient.publish(climateTopic.c_str(), climateMessage.c_str(), true);  
-  mqttClient.publish(batteryTopic.c_str(), batteryMessage.c_str(), true);
   
   configurationPublished[channel] = true;
 }
@@ -217,11 +318,66 @@ void setup()
 
   mqttClient.setServer(MQTT_SERVER.c_str(), MQTT_PORT);
   mqttClient.setCallback(mqttCallback);
+
+
+  uint8_t fails = 0;
+  //try to connect to WiFi for 3 times or launch webserver
+  while(fails<2 && WiFi.status() != WL_CONNECTED)
+  {
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      WiFi.mode(WIFI_STA);
+      WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+  
+      if (WiFi.waitForConnectResult() != WL_CONNECTED)
+      {
+        fails++;
+      }
+    }
+    delay(1000);
+  }
+  if(fails>1)
+  {
+    WiFi.mode(WIFI_OFF);
+    WiFi.softAP(apSSID, apPass);
+    server.onNotFound([](){
+      server.send(200, "text/html", PAGE_index);
+    });
+    httpUpdater.setup(&server);
+    server.begin();
+  
+    while(1)
+    {
+      server.handleClient();
+    }
+  }
+
+  enableHttpUpdater = false;  // disable as succesfully connected
 }
 
 
+bool updateServerInitialised = false;
+
 void loop()
 {
+  if(enableHttpUpdater) // allow update of the esp
+  {
+    //WiFi.mode(WIFI_OFF);
+    //WiFi.softAP(apSSID, apPass);
+    if (!updateServerInitialised) // initialise the httpUpdater
+    {
+    server.onNotFound([](){
+      server.send(200, "text/html", PAGE_index);
+    });
+    httpUpdater.setup(&server);
+    server.begin();
+
+      updateServerInitialised = true;
+    }
+  
+      server.handleClient();
+  }
+
   if (WiFi.status() != WL_CONNECTED)
   {
     WiFi.mode(WIFI_STA);
@@ -242,6 +398,12 @@ void loop()
           
           String modeSetTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/+" + MQTT_SUFFIX_MODE_SET);
           mqttClient.subscribe(modeSetTopic.c_str(), 1);
+
+          String updateTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + MQTT_UPDATE);
+          mqttClient.subscribe(updateTopic.c_str(), 1);
+          
+          mqttClient.subscribe("homeassistant/status", 1);
+          mqttClient.subscribe("hass/status", 1);
           
           mqttClient.publish(will.c_str(), (const uint8_t *)"True", 4, true);
 
@@ -268,6 +430,7 @@ void loop()
 
       for(uint8_t channel = 0; channel < WavinController::NUMBER_OF_CHANNELS; channel++)
       {
+        uint8_t announcedChannel = channel + 1;
         if (wavinController.readRegisters(WavinController::CATEGORY_CHANNELS, channel, WavinController::CHANNELS_PRIMARY_ELEMENT, 1, registers))
         {
           uint16_t primaryElement = registers[0] & WavinController::CHANNELS_PRIMARY_ELEMENT_ELEMENT_MASK;
@@ -291,7 +454,7 @@ void loop()
           {
             uint16_t setpoint = registers[0];
 
-            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_SETPOINT_GET);
+            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_SETPOINT_GET);
             String payload = temperatureAsFloatString(setpoint);
 
             publishIfNewValue(topic, payload, setpoint, &(lastSentValues[channel].setpoint));
@@ -302,7 +465,7 @@ void loop()
           {
             uint16_t mode = registers[0] & WavinController::PACKED_DATA_CONFIGURATION_MODE_MASK; 
 
-            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_MODE_GET);
+            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_MODE_GET);
             if(mode == WavinController::PACKED_DATA_CONFIGURATION_MODE_STANDBY)
             {
               publishIfNewValue(topic, MQTT_VALUE_MODE_STANDBY, mode, &(lastSentValues[channel].mode));
@@ -318,7 +481,7 @@ void loop()
           {
             uint16_t status = registers[0] & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK;
 
-            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_OUTPUT);
+            String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_OUTPUT);
             String payload;
             if (status & WavinController::CHANNELS_TIMER_EVENT_OUTP_ON_MASK)
               payload = "on";
@@ -338,12 +501,42 @@ void loop()
               uint16_t temperature = registers[WavinController::ELEMENTS_AIR_TEMPERATURE];
               uint16_t battery = registers[WavinController::ELEMENTS_BATTERY_STATUS]; // In 10% steps
 
-              String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_CURRENT);
+              // Air temperature reading
+              String topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_CURRENT);
               String payload = temperatureAsFloatString(temperature);
 
-              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].temperature));
+              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].airtemperature));
 
-              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + channel + MQTT_SUFFIX_BATTERY);
+
+              // Floor temperature reading
+              temperature = registers[WavinController::ELEMENTS_FLOOR_TEMPERATURE];
+
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_CURRENTFLOOR);
+              payload = temperatureAsFloatString(temperature);
+
+              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].floortemperature));
+
+
+              // Humidity reading
+              uint16_t humidity = registers[WavinController::ELEMENTS_REL_HUMIDITY];
+
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_HUMIDITY);
+              payload = temperatureAsFloatString(humidity); // same logic for humidity as with temperatures - just reuse
+
+              publishIfNewValue(topic, payload, humidity, &(lastSentValues[channel].humidity));
+
+
+              // Dew point temperature reading
+              temperature = registers[WavinController::ELEMENTS_DEW_POINT];
+
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_DEWPOINT);
+              payload = temperatureAsFloatString(temperature);
+
+              publishIfNewValue(topic, payload, temperature, &(lastSentValues[channel].dewpoint));
+
+
+              // Battery status
+              topic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/" + announcedChannel + MQTT_SUFFIX_BATTERY);
               payload = String(battery*10);
 
               publishIfNewValue(topic, payload, battery, &(lastSentValues[channel].battery));
