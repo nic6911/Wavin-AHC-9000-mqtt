@@ -1,34 +1,12 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoOTA.h>
 #include "WavinController.h"
 #include "PrivateConfig.h"
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPUpdateServer.h>
+#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
+WiFiManager wifiManager;
 
-char apSSID[] = "ESP01Modbus";
-char apPass[] = "11111111";
-
-const char PAGE_index[] PROGMEM = R"=====(
-<!DOCTYPE html>
-<html><head><title>Flash this ESP8266!</title></head><body>
-<h2>Welcome!</h2>
-You are successfully connected to your ESP8266 via its WiFi.<br>
-Please click the button to proceed and upload a new binary firmware!<br><br>
-<b>Be sure to double check the firmware (.bin) is suitable for your chip!<br>
-I am not to be held liable if you accidentally flash a cat pic instead or something goes wrong during the update!<br>
-You are solely responsible for using this tool!</b><br><br>
-<form><input type="button" value="Select firmware..." onclick="window.location.href='/update'" />
-</form><br>
-(c) 2017 Christian Schwinne <br>
-<i>Licensed under the MIT license</i> <br>
-<i>Uses libraries:</i> <br>
-<i>ESP8266 Arduino Core</i> <br>
-</body></html>
-)=====";
-
-ESP8266WebServer server(80);
-ESP8266HTTPUpdateServer httpUpdater;
-
+#define HOST "WavinGW-%s" // Change this to whatever you like. 
 // MQTT defines
 // Esp8266 MAC will be added to the device name, to ensure unique topics
 // Default is topics like 'heat/floorXXXXXXXXXXXX/3/target', where 3 is the output id and XXXXXXXXXXXX is the mac
@@ -56,11 +34,11 @@ String mqttClientWithMac;
 // When mode is set to MQTT_VALUE_MODE_STANDBY, the following temperature will be used
 const float STANDBY_TEMPERATURE_DEG = 5.0;
 
-const uint8_t TX_ENABLE_PIN = 2;
-const bool SWAP_SERIAL_PINS = false;
 const uint16_t RECIEVE_TIMEOUT_MS = 1000;
-WavinController wavinController(TX_ENABLE_PIN, SWAP_SERIAL_PINS, RECIEVE_TIMEOUT_MS);
+WavinController wavinController(RECIEVE_TIMEOUT_MS);
+char chipid[12];
 
+WiFiServer server(80);
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
@@ -232,8 +210,8 @@ void publishConfiguration(uint8_t channel)
 
 void setup()
 {
-  delay(10000);
-  uint8_t fails = 0;
+  WiFi.mode(WIFI_STA);
+  wifiManager.autoConnect("MODBUS-MODULE");
   uint8_t mac[6];
   WiFi.macAddress(mac);
 
@@ -243,50 +221,39 @@ void setup()
   mqttDeviceNameWithMac = String(MQTT_DEVICE_NAME + macStr);
   mqttClientWithMac = String(MQTT_CLIENT + macStr);
 
+  char host[64];
+  uint32_t chipID = ESP.getChipId();
+  sprintf(chipid, "%08X", chipID);
+  sprintf(host, HOST, chipid);
+  delay(500);
+  WiFi.hostname(host);
+  ArduinoOTA.setHostname(host);
+  while (WiFi.waitForConnectResult() != WL_CONNECTED)
+  {
+    delay(5000);
+    ESP.restart();
+  }
+  ArduinoOTA.onStart([]() {
+  });
+  ArduinoOTA.onEnd([]() {
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+  });
+  ArduinoOTA.begin();
+  server.begin();
+  
   mqttClient.setServer(MQTT_SERVER.c_str(), MQTT_PORT);
   mqttClient.setCallback(mqttCallback);
 
-  //try to connect to WiFi for 3 times or launch webserver
-  while(fails<2 && WiFi.status() != WL_CONNECTED)
-  {
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      WiFi.mode(WIFI_STA);
-      WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
-  
-      if (WiFi.waitForConnectResult() != WL_CONNECTED)
-      {
-        fails++;
-      }
-    }  
-  }
-  if(fails>1)
-  {
-    WiFi.mode(WIFI_OFF);
-    WiFi.softAP(apSSID, apPass);
-    server.onNotFound([](){
-      server.send(200, "text/html", PAGE_index);
-    });
-    httpUpdater.setup(&server);
-    server.begin();
-  
-    while(1)
-    {
-      server.handleClient();
-    }
-  }
 }
 
 
 void loop()
 {
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
-
-    if (WiFi.waitForConnectResult() != WL_CONNECTED) return;
-  }
+  ArduinoOTA.handle();
+  WiFiClient wifiClient = server.available();
 
   if (WiFi.status() == WL_CONNECTED)
   {

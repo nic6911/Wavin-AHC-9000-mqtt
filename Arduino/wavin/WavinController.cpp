@@ -2,20 +2,13 @@
 #include "WavinController.h"
 
 
-WavinController::WavinController(uint8_t pin, bool swapSerialPins, uint16_t timeout_ms)
+WavinController::WavinController(uint16_t timeout_ms)
 {
-  txEnablePin = pin;
-  digitalWrite(pin, LOW);
-  pinMode(pin, OUTPUT);
 
   recieveTimeout_ms = timeout_ms;
 
   Serial.begin(38400);
 
-  if(swapSerialPins)
-  {
-    Serial.swap();
-  }
 }
 
 

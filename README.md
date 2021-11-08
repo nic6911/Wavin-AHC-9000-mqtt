@@ -50,14 +50,24 @@ Look in the electronics folder for pictures of the programmer and the modificati
 
 ## Software
 
-### UPDATE !
+### Major SW change 8/11/2021 !
 
-I have modified the Arduino version to include a webserver that reveals itself with SSID "ESP01Modbus" if no WiFi connection can be established !
-It incorporates the Minimal HTTP updater by Christian Schwinne enabling you tu connect to the accesspoint and upload a new firmware with your correct credentials.
+The latest SW commit implements a WiFi manager enabling easy connection to your WiFi network and subsequently upload of Arduino code wirelessly through the Arduino IDE with your own MQTT settings ! 
+So, when you connect the module to power it will show up as an access point:
+![AP](/OTA/AP.png)
 
-To generate the new firmware simply open the arduino project, update credentials as needed in the PrivateConfig.h, select the generic ESP8266 board as target and hit build.
-You now have to locate the generated wavin.ino.bin which for Windows users is located at: C:\Users\username\AppData\Local\Temp\arduino_build_xxxx
-Connect to ESP01Modbus using password 11111111 and upload the firmware you just generated.
+When connecting to the AP it will on most computers automaticlly open up a browser dialog. If not, go to 192.168.4.1 to see the WiFi manager dialog:
+![wifimanager](/OTA/wifi_setting.png)
+
+When done you will now be able to see the device in the Arduino IDE and thus able to upload code to it without a programmer:
+![upload](/OTA/upload.png)
+
+The things marked in red is settings you'll need to have.
+
+Remember to edit the MQTT settings befor uploading:
+![mqttsetting](/OTA/mqttsetting.png)
+
+Enjoy !
 
 ### Video Tutorials
 I have made a couple of video tutorials.
