@@ -1,3 +1,5 @@
+#include <FS.h>  
+#include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoOTA.h>
@@ -37,6 +39,9 @@ const float STANDBY_TEMPERATURE_DEG = 5.0;
 const uint16_t RECIEVE_TIMEOUT_MS = 1000;
 WavinController wavinController(RECIEVE_TIMEOUT_MS);
 char chipid[12];
+char mqttserver[40]=MQTTSERVER;
+char mqttusername[20]=MQTTUSERNAME;
+char mqttpassword[20]=MQTTPASSWORD;
 
 WiFiServer server(80);
 WiFiClient wifiClient;
@@ -207,11 +212,95 @@ void publishConfiguration(uint8_t channel)
   configurationPublished[channel] = true;
 }
 
+//flag for saving data
+bool shouldSaveConfig = false;
+
+//callback notifying us of the need to save config
+void saveConfigCallback () {
+  shouldSaveConfig = true;
+}
 
 void setup()
 {
-  WiFi.mode(WIFI_STA);
-  wifiManager.autoConnect("MODBUS-MODULE");
+WiFi.mode(WIFI_STA);
+  //read configuration from FS json
+  if (SPIFFS.begin()) {
+    if (SPIFFS.exists("/config.json")) {
+      //file exists, reading and loading
+      File configFile = SPIFFS.open("/config.json", "r");
+      if (configFile) {
+        size_t size = configFile.size();
+        // Allocate a buffer to store contents of the file.
+        std::unique_ptr<char[]> buf(new char[size]);
+
+        configFile.readBytes(buf.get(), size);
+#ifdef ARDUINOJSON_VERSION_MAJOR >= 6
+        DynamicJsonDocument json(1024);
+        auto deserializeError = deserializeJson(json, buf.get());
+        serializeJson(json, Serial);
+        if ( ! deserializeError ) {
+#else
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject& json = jsonBuffer.parseObject(buf.get());
+        json.printTo(Serial);
+        if (json.success()) {
+#endif
+          strcpy(mqttserver, json["mqtt_server"]);
+          strcpy(mqttusername, json["mqtt_user"]);
+          strcpy(mqttpassword, json["mqtt_pass"]);
+        }
+      }
+    }
+  } 
+  //end read
+  WiFiManagerParameter custom_mqtt_server("server", "mqtt server", mqttserver, 40);
+  WiFiManagerParameter custom_mqtt_user("user", "mqtt username", mqttusername, 20);
+  WiFiManagerParameter custom_mqtt_pass("password", "mqtt password", mqttpassword, 20);
+
+  //set config save notify callback
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+  wifiManager.addParameter(&custom_mqtt_server);
+  wifiManager.addParameter(&custom_mqtt_user);
+  wifiManager.addParameter(&custom_mqtt_pass);
+    //fetches ssid and pass and tries to connect
+    //if it does not connect it starts an access point with the specified name
+    //and goes into a blocking loop awaiting configuration
+    if (!wifiManager.autoConnect("MODBUS-MODULE")) {
+      delay(3000);
+      //reset and try again, or maybe put it to deep sleep
+      ESP.restart();
+      delay(5000);
+    }
+
+    //read updated parameters
+    strcpy(mqttserver, custom_mqtt_server.getValue());
+    strcpy(mqttusername, custom_mqtt_user.getValue());
+    strcpy(mqttpassword, custom_mqtt_pass.getValue());
+    
+    //save the custom parameters to FS
+    if (shouldSaveConfig) {
+    #ifdef ARDUINOJSON_VERSION_MAJOR >= 6
+      DynamicJsonDocument json(1024);
+    #else
+      DynamicJsonBuffer jsonBuffer;
+      JsonObject& json = jsonBuffer.createObject();
+    #endif
+      json["mqtt_server"] = mqttserver;
+      json["mqtt_user"] = mqttusername;
+      json["mqtt_pass"] = mqttpassword;
+    
+      File configFile = SPIFFS.open("/config.json", "w");
+    
+    #ifdef ARDUINOJSON_VERSION_MAJOR >= 6
+      serializeJson(json, Serial);
+      serializeJson(json, configFile);
+    #else
+      json.printTo(Serial);
+      json.printTo(configFile);
+    #endif
+      configFile.close();
+      //end save
+    }
   uint8_t mac[6];
   WiFi.macAddress(mac);
 
@@ -228,11 +317,6 @@ void setup()
   delay(500);
   WiFi.hostname(host);
   ArduinoOTA.setHostname(host);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED)
-  {
-    delay(5000);
-    ESP.restart();
-  }
   ArduinoOTA.onStart([]() {
   });
   ArduinoOTA.onEnd([]() {
@@ -244,7 +328,7 @@ void setup()
   ArduinoOTA.begin();
   server.begin();
   
-  mqttClient.setServer(MQTT_SERVER.c_str(), MQTT_PORT);
+  mqttClient.setServer(mqttserver, 1883);
   mqttClient.setCallback(mqttCallback);
 
 }
@@ -260,7 +344,7 @@ void loop()
     if (!mqttClient.connected())
     {
       String will = String(MQTT_PREFIX + mqttDeviceNameWithMac + MQTT_ONLINE);
-      if (mqttClient.connect(mqttClientWithMac.c_str(), MQTT_USER.c_str(), MQTT_PASS.c_str(), will.c_str(), 1, true, "False") )
+      if (mqttClient.connect(mqttClientWithMac.c_str(), mqttusername, mqttpassword, will.c_str(), 1, true, "False") )
       {
           String setpointSetTopic = String(MQTT_PREFIX + mqttDeviceNameWithMac + "/+" + MQTT_SUFFIX_SETPOINT_SET);
           mqttClient.subscribe(setpointSetTopic.c_str(), 1);

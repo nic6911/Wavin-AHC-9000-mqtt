@@ -50,7 +50,14 @@ Look in the electronics folder for pictures of the programmer and the modificati
 
 ## Software
 
-### Major SW change 8/11/2021 !
+### SW change 12/11/2021 !
+
+In addition to the WiFi setting dialog I also added MQTT settings to the dialog. This means that if you have a module programmed for Wavin and your are to use it on a Wavin then you simply just enter your credentials and then you are done !
+If you have a module programmed for Wavin but need it to work on a Nilan then you have to upload code OTA as shown below in the 8/11/2021 update 
+
+![mqttwifisetting](/OTA/mqttwifisetting.PNG)
+
+### SW change 8/11/2021 !
 
 The latest SW commit implements a WiFi manager enabling easy connection to your WiFi network and subsequently upload of Arduino code wirelessly through the Arduino IDE with your own MQTT settings ! 
 So, when you connect the module to power it will show up as an access point:
