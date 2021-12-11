@@ -66,6 +66,13 @@ esphome:
   project:
     name: "home.wavin_gulvvarme"
     version: "1.0.0"
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
   
 ota:
   password: "945ac67ddcae11048f6a488672b6aadb"
