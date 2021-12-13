@@ -69,10 +69,10 @@ esphome:
 
 # Enable logging
 logger:
-
+  baud_rate: 0
+    
 # Enable Home Assistant API
 api:
-
   
 ota:
   password: "945ac67ddcae11048f6a488672b6aadb"
