@@ -54,6 +54,7 @@ Look in the electronics folder for pictures of the programmer and the modificati
 
 Added ESPHome yaml to the repo. The module can use ESPHome instead of the traditional Arduino SW. This then only requires you to install the esphome integration and you are good to go ! No MQTT server setup or anything like that :)
 I also included a fallback Wi-Fi hotspot in case you get a pre-programmed module. This then pops up as an access point. Connect to it and it'll ask you for Wi-Fi credentials. Type them in and you have the system online ! 
+https://youtu.be/gB1TLhx6Nzc
 
 ### SW change 12/11/2021 !
 
