@@ -4,7 +4,7 @@
 class WavinController
 {
   public:
-    WavinController(uint8_t pin, bool swapSerialPins, uint16_t timeout_ms);
+    WavinController(uint16_t timeout_ms);
     bool readRegisters(uint8_t category, uint8_t page, uint8_t index, uint8_t count, uint16_t *reply);
     bool writeRegister(uint8_t category, uint8_t page, uint8_t index, uint16_t value);
     bool writeMaskedRegister(uint8_t category, uint8_t page, uint8_t index, uint16_t value, uint16_t mask);
