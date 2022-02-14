@@ -123,8 +123,8 @@ climate:
       name: ${friendly_name} Battery ${channel_1}
     current_temp:
       name: ${friendly_name} Temp ${channel_1}
-    current_comfort_temp:
-      name: ${friendly_name} Comfort temp ${channel_1}      
+    current_floor_temp:
+      name: ${friendly_name} Floor temp ${channel_1}      
     visual:
       temperature_step: ${temp_step} °C
       min_temperature: ${climate_min_temp} °C
