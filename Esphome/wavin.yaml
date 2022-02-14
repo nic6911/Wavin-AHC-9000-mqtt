@@ -247,6 +247,66 @@ climate:
       min_temperature: ${climate_min_temp} °C
       max_temperature: ${climate_max_temp} °C
       
+  - platform: wavinAhc9000
+    channel: 12
+    name: ${friendly_name} Climate ${channel_12}
+    battery_level:
+      name: ${friendly_name} Battery ${channel_12}
+    current_temp:
+      name: ${friendly_name} Temp ${channel_12}       
+    visual:
+      temperature_step: ${temp_step} °C
+      min_temperature: ${climate_min_temp} °C
+      max_temperature: ${climate_max_temp} °C
+      
+  - platform: wavinAhc9000
+    channel: 13
+    name: ${friendly_name} Climate ${channel_13}
+    battery_level:
+      name: ${friendly_name} Battery ${channel_13}
+    current_temp:
+      name: ${friendly_name} Temp ${channel_13}       
+    visual:
+      temperature_step: ${temp_step} °C
+      min_temperature: ${climate_min_temp} °C
+      max_temperature: ${climate_max_temp} °C
+      
+  - platform: wavinAhc9000
+    channel: 14
+    name: ${friendly_name} Climate ${channel_14}
+    battery_level:
+      name: ${friendly_name} Battery ${channel_14}
+    current_temp:
+      name: ${friendly_name} Temp ${channel_14}       
+    visual:
+      temperature_step: ${temp_step} °C
+      min_temperature: ${climate_min_temp} °C
+      max_temperature: ${climate_max_temp} °C
+      
+  - platform: wavinAhc9000
+    channel: 15
+    name: ${friendly_name} Climate ${channel_15}
+    battery_level:
+      name: ${friendly_name} Battery ${channel_15}
+    current_temp:
+      name: ${friendly_name} Temp ${channel_15}       
+    visual:
+      temperature_step: ${temp_step} °C
+      min_temperature: ${climate_min_temp} °C
+      max_temperature: ${climate_max_temp} °C
+      
+  - platform: wavinAhc9000
+    channel: 16
+    name: ${friendly_name} Climate ${channel_16}
+    battery_level:
+      name: ${friendly_name} Battery ${channel_16}
+    current_temp:
+      name: ${friendly_name} Temp ${channel_16}       
+    visual:
+      temperature_step: ${temp_step} °C
+      min_temperature: ${climate_min_temp} °C
+      max_temperature: ${climate_max_temp} °C
+      
      
 
 
