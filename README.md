@@ -7,10 +7,14 @@ Using the hardware and code presented here is done at you own risk. The hardware
 
 ## Hardware
 
-The Hardware used here is a design done by me (nic6911) and is a mutli-purpose ESP-01 Modbus module that was intended for Wavin AHC9000 and Nilan ventilation. But since it is pretty generic it will suit most modus applications.
+## ESP32C3
+See here: https://github.com/nic6911/ESP32_Modbus_Module
+
+## ESP8266
+The Hardware used here is a design done by me and is a mutli-purpose ESP-01 Modbus module that was intended for Wavin AHC9000 and Nilan ventilation. But since it is pretty generic it will suit most modus applications.
 The hardware includes buck converter supplying the ESP-01 and Modbus module with 3.3V from anything going from 8-24V (28V absolute max rating) as 12V and 24V are usually available on these systems for powering something like this.
 
-### Revision 1.0
+### ESP8266 Revision 1.0
 The AHC-9000 uses modbus to communicate over a half duplex RS422 connection. It has two RJ45 connectors for this purpose, which can both be used. 
 The following schematic shows how my board is constructed in rev 1.0
 ![Schematic](/electronics/schematic.png)
@@ -21,7 +25,7 @@ My board design is made to fit with an ESP-01 board as seen here:
 ![Top](/electronics/Top.PNG)
 
 
-### Revision 2.1
+### ESP8266 Revision 2.1
 To facilitate code versions using Modbus converters without the data direction controlled from the ESP I have implemented Automatic Direction Control. This also makes one more IO available for other uses.
 I have decided to add 2 x Optocoupler, one on each available IO, to have isolated outputs which I intend to use for my Nilan system.
 This effectively means that the rev 2.1 is a more general purpose hardware platform that in my case will be used for both my Wavin and Nilan setups.
@@ -41,46 +45,19 @@ On the Wavin you simply use a patch cable (straight) and connect it from the mod
 ### Common
 
 For this setup to work you need:
-My ESP-01 Modus Interface board or similar
-An ESP-01
-A programmer for the ESP-01
+My ESP-01 or ESP32C3 Modbus Interface board or similar
+A programmer for the ESP-01 in case you use that
 
 I use the widely available FTDI interface suited for the ESP-01 which requires a minor modification to enable programming mode. To enable programming of the board you need to short two pins for going into programming mode. I solved this with a pin-row and a jumper for selecting programming or not.
 Look in the electronics folder for pictures of the programmer and the modification.
 
 ## Software
 
-### SW addition 30/11/2021 !
+### ESP32C3
+Supporting the ESP32C3 version of the modbus module using MQTT through Arduino
 
-Added ESPHome yaml to the repo. The module can use ESPHome instead of the traditional Arduino SW. This then only requires you to install the esphome integration and you are good to go ! No MQTT server setup or anything like that :)
-I also included a fallback Wi-Fi hotspot in case you get a pre-programmed module. This then pops up as an access point. Connect to it and it'll ask you for Wi-Fi credentials. Type them in and you have the system online ! 
-https://youtu.be/gB1TLhx6Nzc
-
-### SW change 12/11/2021 !
-
-In addition to the WiFi setting dialog I also added MQTT settings to the dialog. This means that if you have a module programmed for Wavin and your are to use it on a Wavin then you simply just enter your credentials and then you are done !
-If you have a module programmed for Wavin but need it to work on a Nilan then you have to upload code OTA as shown below in the 8/11/2021 update 
-
-![mqttwifisetting](/OTA/mqttwifisetting.PNG)
-
-### SW change 8/11/2021 !
-
-The latest SW commit implements a WiFi manager enabling easy connection to your WiFi network and subsequently upload of Arduino code wirelessly through the Arduino IDE with your own MQTT settings ! 
-So, when you connect the module to power it will show up as an access point:
-![AP](/OTA/AP.png)
-
-When connecting to the AP it will on most computers automaticlly open up a browser dialog. If not, go to 192.168.4.1 to see the WiFi manager dialog:
-![wifimanager](/OTA/wifi_setting.png)
-
-When done you will now be able to see the device in the Arduino IDE and thus able to upload code to it without a programmer:
-![upload](/OTA/upload.png)
-
-The things marked in red is settings you'll need to have.
-
-Remember to edit the MQTT settings befor uploading:
-![mqttsetting](/OTA/mqttsetting.png)
-
-Enjoy !
+### ESP8266
+Supporting the deprecated ESP8266 version of the board
 
 ### Video Tutorials
 I have made a couple of video tutorials.
