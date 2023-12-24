@@ -6,9 +6,9 @@ Do this at your own risk ! You are interfacing with hardware that you can potent
 Using the hardware and code presented here is done at you own risk. The hardware and software has been tested on Wavin AHC9000 and Nilan Comfort 300 without issues.
 
 ## Homey App and install instructions
-Homey App: https://homey.app/en-dk/app/com.wavin.ahc9000/Wavin-AHC-9000/
+Homey App from a user (Filip B Bech): https://homey.app/en-dk/app/com.wavin.ahc9000/Wavin-AHC-9000/
 
-Guide: https://github.com/nic6911/Wavin-AHC-9000-mqtt/blob/master/doc/Homey%20guide%20til%20Wavin%20AHC%209000%20ModBus%20installation.pdf
+Guide from a user (Jan): https://github.com/nic6911/Wavin-AHC-9000-mqtt/blob/master/doc/Homey%20guide%20til%20Wavin%20AHC%209000%20ModBus%20installation.pdf
 
 ## Hardware
 
