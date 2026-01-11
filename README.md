@@ -1,11 +1,10 @@
 # Wavin-AHC-9000-mqtt
-This is a simple Esp8266 mqtt interface for Wavin AHC-9000/Jablotron AC-116, with the goal of being able to control this heating controller from a home automation system. The fork here is just an edit to fit a ESP-01 for which I have made a PCB giving a very compact unit.
-
-## Disclaimer
-Do this at your own risk ! You are interfacing with hardware that you can potentially damage if you do not connect things as required !
-Using the hardware and code presented here is done at you own risk. The hardware and software has been tested on Wavin AHC9000 and Nilan Comfort 300 without issues.
+This is a simple mqtt interface for Wavin AHC-9000/Jablotron AC-116, with the goal of being able to control this heating controller from a home automation system. 
 
 ## Homey App and install instructions
+
+I have not done this myself as I run Home Assistant - but there's guides from user here:
+
 Homey App from a user (Filip B Bech): https://homey.app/en-dk/app/com.wavin.ahc9000/Wavin-AHC-9000/
 
 Guide from a user (Jan): https://github.com/nic6911/Wavin-AHC-9000-mqtt/blob/master/doc/Homey%20guide%20til%20Wavin%20AHC%209000%20ModBus%20installation.pdf
@@ -15,54 +14,11 @@ Guide from a user (Jan): https://github.com/nic6911/Wavin-AHC-9000-mqtt/blob/mas
 ## ESP32C3
 See here: https://github.com/nic6911/ESP32_Modbus_Module
 
-## ESP8266
-The Hardware used here is a design done by me and is a mutli-purpose ESP-01 Modbus module that was intended for Wavin AHC9000 and Nilan ventilation. But since it is pretty generic it will suit most modus applications.
-The hardware includes buck converter supplying the ESP-01 and Modbus module with 3.3V from anything going from 8-24V (28V absolute max rating) as 12V and 24V are usually available on these systems for powering something like this.
-
-### ESP8266 Revision 1.0
-The AHC-9000 uses modbus to communicate over a half duplex RS422 connection. It has two RJ45 connectors for this purpose, which can both be used. 
-The following schematic shows how my board is constructed in rev 1.0
-![Schematic](/electronics/schematic.png)
-
-
-My board design is made to fit with an ESP-01 board as seen here:
-![Bottom](/electronics/Bottom.PNG)
-![Top](/electronics/Top.PNG)
-
-
-### ESP8266 Revision 2.1
-To facilitate code versions using Modbus converters without the data direction controlled from the ESP I have implemented Automatic Direction Control. This also makes one more IO available for other uses.
-I have decided to add 2 x Optocoupler, one on each available IO, to have isolated outputs which I intend to use for my Nilan system.
-This effectively means that the rev 2.1 is a more general purpose hardware platform that in my case will be used for both my Wavin and Nilan setups.
-
-The following schematic shows how my board is constructed in rev 2.1
-![Schematic](/electronics/Rev2_1/schematic.PNG)
-
-My board design rev 2.1 is seen here:
-![Bottom](/electronics/Rev2_1/Bottom.PNG)
-![Top](/electronics/Rev2_1/Top.PNG)
-
-A wiring example on a Comfort 300 and Wavin AHC9000 is shown here:
-![Top](/electronics/Rev2_1/Connections.png)
-
-On the Wavin you simply use a patch cable (straight) and connect it from the module to the Modbus port and then you are done :)
-
-### Common
-
-For this setup to work you need:
-My ESP-01 or ESP32C3 Modbus Interface board or similar
-A programmer for the ESP-01 in case you use that
-
-I use the widely available FTDI interface suited for the ESP-01 which requires a minor modification to enable programming mode. To enable programming of the board you need to short two pins for going into programming mode. I solved this with a pin-row and a jumper for selecting programming or not.
-Look in the electronics folder for pictures of the programmer and the modification.
 
 ## Software
 
 ### ESP32C3
 Supporting the ESP32C3 version of the modbus module using MQTT through Arduino
-
-### ESP8266
-Supporting the deprecated ESP8266 version of the board
 
 ### Video Tutorials
 I have made a couple of video tutorials.
@@ -70,13 +26,8 @@ I have made a couple of video tutorials.
 For setting up Home Assistant for MQTT, finding the Wavin client and adding zones looke here:
 https://youtu.be/kwnt9SaQ6Jc
 
-For the above to work you have to have a programmed ESP-01 talking modbus (like my module with ESP-01) which is shown next.
-
-For programming the ESP-01 using a programmer look here:
+For the above to work you have to have a programmed ESP device talking modbus. I have made this video tutorial for ESP-01, but similar procedure is viable for the new ESP32-C3.
 https://youtu.be/PWJ3N4B8Pc4
-
-If you have a pre-programmed ESP-01 with OTA support then you have to install the library dependencies as above but do not have to use a programmer. You can then program it like shown here:
-https://youtu.be/2H5gkzoha98
 
 ### Important config changes
 
@@ -167,3 +118,7 @@ sensor wavinBattery:
     device_class: battery
     qos: 0
 ```
+
+## Disclaimer
+Do this at your own risk ! You are interfacing with hardware that you can potentially damage if you do not connect things as required !
+Using the hardware and code presented here is done at you own risk. The hardware and software has been tested on Wavin AHC9000 and Nilan Comfort 300 without issues.
